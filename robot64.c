@@ -25,8 +25,6 @@
 #define M_TORAD pi/180
 #define M_TODEG 180/pi
 
-//#include <ode/ode.h>
-
 #if defined(PLATFORM_DESKTOP)
     #define GLSL_VERSION            330
 #else   // PLATFORM_ANDROID, PLATFORM_WEB
@@ -103,9 +101,6 @@ typedef struct {
     Vector3 pos;
     Vector3 size;
     int type; //type id of thing
-    //int tex;//texture id of thing
-    //int mdl;//model id of thing
-    //int box;//hitbox id of thing
     unsigned short uid;
     bool disabled;
 } Entity;
@@ -159,10 +154,6 @@ const bool gr3[]={ //if can be activated by beebo standing on it
 //----------------------------------------------------------------------------------
 // Local Variables Definition (local to this module)
 //----------------------------------------------------------------------------------
-
-//ode physics
-//dWorldID world;
-//dSpaceID space;
 
 //embedded files
 
@@ -225,8 +216,6 @@ const unsigned char sfx_sa4[]={ //step A 4
 const unsigned char sfx_sa5[]={ //step A 5
 #embed "sfx/sa5.ogg"
 };
-//const unsigned char *steplist[] = {sfx_sa1,sfx_sa2,sfx_sa3,sfx_sa4,sfx_sa5};
-//const int stepsize[] = {sizeof(sfx_sa1),sizeof(sfx_sa2),sizeof(sfx_sa3),sizeof(sfx_sa4),sizeof(sfx_sa5)};
 
 //music
 const unsigned char hub_bgm[]={
@@ -256,7 +245,6 @@ const unsigned char turtle_bgmW[]={
 const unsigned char turtle_bgmP[]={
 #embed "music/snippy dippy paused.ogg"
 };
-//const unsigned char *sonlist[] = {hub_bgm,title_bgm};
 //textures
 const unsigned char tex_padding[]={
 #embed "textures/padding.png"
@@ -683,7 +671,6 @@ Model ml_cloud;
 Model ml_icedcream;
 //textures
 Texture2D curskin;
-//Texture2D bt_face1;
 Texture2D bt_faces[5];
 
 //maphandling
@@ -692,7 +679,7 @@ EntTL entlist;
 EntVL entlistV;
 ParL particles = {0};
 
-Mesh GenMeshCubeT(float width,float height,float length,float studs){
+Mesh GenMeshCubeT(float width,float height,float length,float studs){ //copied from raylib because idk how todo this, only to modify it
     Mesh mesh = {0};
     float vertices[] = {
         -width/2, -height/2, length/2,
@@ -746,9 +733,6 @@ Mesh GenMeshCubeT(float width,float height,float length,float studs){
         length/studs, height/studs,
         0.0f, height/studs
     };
-    //for(int q=0;q<48;q++){
-    //    texcoords[q]*=2;
-    //}
     float normals[] = {
         0.0f, 0.0f, 1.0f,
         0.0f, 0.0f, 1.0f,
@@ -789,7 +773,6 @@ Mesh GenMeshCubeT(float width,float height,float length,float studs){
 
     int k = 0;
 
-    // Indices can be initialized right now
     for (int i=0; i<36; i+=6)
     {
         mesh.indices[i] = 4*k;
@@ -806,7 +789,7 @@ Mesh GenMeshCubeT(float width,float height,float length,float studs){
     UploadMesh(&mesh, false);
     return mesh;
 }
-Mesh GenMeshPlaneT(float width, float length, int resX, int resZ, float studsx, float studsy){
+Mesh GenMeshPlaneT(float width, float length, int resX, int resZ, float studsx, float studsy){ //copied from raylib because idk how todo this, only to modify it
     Mesh mesh = { 0 };
 
     resX++;
@@ -826,7 +809,7 @@ Mesh GenMeshPlaneT(float width, float length, int resX, int resZ, float studsx, 
     }
 
     Vector3 *normals = (Vector3 *)RL_MALLOC(vertexCount*sizeof(Vector3));
-    for (int n = 0; n < vertexCount; n++) normals[n] = (Vector3){ 0.0f, 1.0f, 0.0f };   // Vector3.up;
+    for (int n = 0; n < vertexCount; n++) normals[n] = (Vector3){ 0.0f, 1.0f, 0.0f };
 
     Vector2 *texcoords = (Vector2 *)RL_MALLOC(vertexCount*sizeof(Vector2));
     
@@ -844,7 +827,6 @@ Mesh GenMeshPlaneT(float width, float length, int resX, int resZ, float studsx, 
     int t = 0;
     for (int face = 0; face < numFaces; face++)
     {
-        // Retrieve lower left corner from face ind
         int i = face + face/(resX - 1);
 
         triangles[t++] = i + resX;
@@ -890,7 +872,6 @@ Mesh GenMeshPlaneT(float width, float length, int resX, int resZ, float studsx, 
     RL_FREE(texcoords);
     RL_FREE(triangles);
 
-    // Upload vertex data to GPU (static mesh)
     UploadMesh(&mesh, false);
 
     return mesh;
@@ -901,7 +882,7 @@ Entity crEnt(unsigned short t,float x,float y,float z,float sx,float sy,float sz
     e.pos = (Vector3){x,y,z};
     e.size = (Vector3){sx,sy,sz};
     e.type = t;
-    e.uid = nextuid;//rand();
+    e.uid = nextuid;
     nextuid++;
     return e;
 }
@@ -937,7 +918,6 @@ FoundVar findvarF(unsigned short uid,unsigned short nam){
 Matrix MatrixRotateXYZa(Vector3 rot){
     Matrix deeznuts = MatrixRotateXYZ((Vector3){rot.x,0,rot.z});
     deeznuts = MatrixMultiply(deeznuts,MatrixRotateXYZ((Vector3){0,rot.y,0}));
-    //deeznuts = MatrixMultiply(deeznuts,MatrixRotateXYZ((Vector3){0,0,rot.z}));
     return deeznuts;
 }
 Matrix trgetm(uint8_t i){
@@ -945,7 +925,7 @@ Matrix trgetm(uint8_t i){
     deeznuts = MatrixMultiply(deeznuts,MatrixScale(gm3d.items[i].s*gm3d.items[i].sx,
                                                    gm3d.items[i].s*gm3d.items[i].sy,
                                                    gm3d.items[i].s*gm3d.items[i].sz));
-    deeznuts = MatrixMultiply(deeznuts,MatrixRotateXYZ((Vector3){gm3d.items[i].rx,0,0}));
+    deeznuts = MatrixMultiply(deeznuts,MatrixRotateXYZ((Vector3){gm3d.items[i].rx,0,gm3d.items[i].rz}));
     deeznuts = MatrixMultiply(deeznuts,MatrixRotateXYZ((Vector3){0,gm3d.items[i].ry,0}));
     deeznuts = MatrixMultiply(deeznuts,MatrixTranslate(gm3d.items[i].x,gm3d.items[i].y,gm3d.items[i].z));
     return deeznuts;
@@ -958,9 +938,6 @@ void compileassets(){
         if(gm3d.items[i].sy==0){gm3d.items[i].sy=1;}
         if(gm3d.items[i].sz==0){gm3d.items[i].sz=1;}
         if(gm3d.items[i].gen){
-            //if(gm3d.items[i].tex!=-1){
-            //    SetTextureWrap(gm3d.items[i].mdl.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture,TEXTURE_WRAP_REPEAT);
-            //}
             if(!gm3d.items[i].glow){
                 gm3d.items[i].mdl.materials[0].shader = shader;
             }
@@ -1107,7 +1084,7 @@ void map_title(){
     map = M_TITLE;
     usechar = false;
 	Image img = LoadImageFromMemory(".png",tex_sky_title,sizeof(tex_sky_title));
-    skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);    // CUBEMAP_LAYOUT_PANORAMA
+    skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);
     UnloadImage(img);
     bgm = LoadMusicStreamFromMemory(".ogg",title_bgm,sizeof(title_bgm));
 	bgm.looping = true;
@@ -1485,7 +1462,6 @@ Camera camera = { 0 };
 Camera camera2 = { 0 };
 uint32_t frame = 0;
 uint32_t bus = 0;
-//Vector3 cubePosition = { 0 };
 
 Model skybox;
 
@@ -1635,7 +1611,6 @@ Vector3 rotvec(Vector3 vec,Vector3 rot){//xyz yaw pitch roll
 }
 
 Vector3 projv3(Vector3 target,Vector3 planenormal){
-    //return Vector3Subtract(target,Vector3Scale(planenormal,Vector3DotProduct(target,Vector3Normalize(planenormal))));
     float speedtonormal = Vector3DotProduct(target,Vector3Normalize(planenormal));
     if(speedtonormal>0){
         return target;
@@ -1643,10 +1618,6 @@ Vector3 projv3(Vector3 target,Vector3 planenormal){
         return Vector3Subtract(target,Vector3Scale(planenormal,speedtonormal));
     }
 }
-
-//Vector3 projv3p(Vector3 target,Vector3 planenormal,Vector3 planepoint){
-//    return Vector3Subtract(target,Vector3Scale(planenormal,Vector3DotProduct(Vector3Subtract(target,planepoint),planenormal)));
-//}
 
 scuffedrays scuffedcol(Vector3 pos,float radius,Vector3 only,bool full){
     scuffedrays Skibidigyats = {0};
@@ -1777,7 +1748,7 @@ Vector2 fixrotpos2(float rot){
 Font r64font;
 void r64text(const char *text,int x,int y,float size,float ax,float ay,Color clr){
     Vector2 measure = MeasureTextEx(r64font,text,size,0);
-    DrawTextPro(r64font,text,(Vector2){x-(measure.x*ax),(y-(measure.y*ay))+(size/16)},(Vector2){0,0},0,size,0,(Color){0,0,0,51}); //originally size/8
+    DrawTextPro(r64font,text,(Vector2){x-(measure.x*ax),(y-(measure.y*ay))+(size/16)},(Vector2){0,0},0,size,0,(Color){0,0,0,51});
     DrawTextPro(r64font,text,(Vector2){x-(measure.x*ax),y-(measure.y*ay)},(Vector2){0,0},0,size,0,clr);
 }
 void tex3d(Texture2D tex,Vector3 pos,float scale,Color c){
@@ -1795,7 +1766,6 @@ double gtick = 0;
 double g06next = 0;
 uint8_t faceid = 0;
 
-//Vector3 DEBUGrot = {0};
 #define dt 1.0f/60.0f
 Matrix vistorso = {0};
 Vector3 vistorsopos = {0};
@@ -1851,7 +1821,6 @@ void drawbeeb(){
         float nrm = (1-holderp)*(1-croucherp)*(1-lederp)*(1-polerp)*(1-aterp)*(1-dancerp);
         float wtk = sin(walktick*14)*walklerp;
         float wallslide = (1-walklerp)*wallerp*(1-lederp)*(1-skaterp);
-        //FIX: math new sin wallrun
         float sin1 = fabs(wtk) * (.8*grn)/(roperp+1)*(1-swimerp);
         float sin2 = wtk*-1.2*grn/(roperp+1)/(polerp+1) + fallerp*(1-sliderp)*(1-longerp)*(1-aterp)
             +sin(gtick*6)*dancerp;
@@ -2028,7 +1997,6 @@ void drawbeeb(){
     Vector3 headonlypos = Vector3Transform((Vector3){0},headpos);
     if(!paused){
         Vector3 hed = Vector3Add(headonlypos,Vector3Scale(matup(headpos),2));
-        //Vector3 hed = Vector3Add(headonlypos,(Vector3){0,2});
         Vector3 t = Vector3Subtract(hed,plrdot);
         plrdotvel = Vector3Subtract(Vector3Add(plrdotvel,Vector3Scale(t,dt*8)),Vector3Scale(plrdotvel,dt*5));
         float complexcrap = headonlypos.y+(matup(headpos).y*1.5);
@@ -2059,21 +2027,20 @@ void drawbeeb(){
     
     //where we draw everything
     if(camzoomlerp>.2){
-        DrawMesh(b_torso.meshes[0],b_torso.materials[1],MatrixMultiply(MatrixScale(0.9432819383,0.943246311,0.9435414885),torsopos)); //originally only x
+        DrawMesh(b_torso.meshes[0],b_torso.materials[1],MatrixMultiply(MatrixScale(0.9432819383,0.943246311,0.9435414885),torsopos));
         Matrix headposS = MatrixMultiply(MatrixScale(0.25f,0.25f,0.25f),headpos);
         DrawMesh(b_head.meshes[0],b_head.materials[1],headposS);
         DrawMesh(b_face.meshes[0],b_face.materials[1],MatrixMultiply(MatrixScale(1.005f,1.005f,1.005f),headposS));
-        DrawMesh(b_leg.meshes[0],b_leg.materials[1],MatrixMultiply(MatrixScale(0.8048076923,0.8043052838,0.8041305796),legApos)); //originally only y
-        DrawMesh(b_leg.meshes[0],b_leg.materials[1],MatrixMultiply(MatrixScale(0.8048076923,0.8043052838,0.8041305796),legBpos)); //originally only y
-        DrawMesh(b_tarm.meshes[0],b_tarm.materials[1],MatrixMultiply(MatrixScale(0.6875,0.9083402147f,0.6875),armApos)); //originally only y
-        DrawMesh(b_tarm.meshes[0],b_tarm.materials[1],MatrixMultiply(MatrixScale(0.6875,0.9083402147f,0.6875),armBpos)); //originally only y
-        DrawMesh(b_barm.meshes[0],b_barm.materials[1],MatrixMultiply(MatrixScale(0.5178907721,0.4793028322f,0.5178907721),armCpos)); //originally only y
-        DrawMesh(b_barm.meshes[0],b_barm.materials[1],MatrixMultiply(MatrixScale(0.5178907721,0.4793028322f,0.5178907721),armDpos)); //originally only y
+        DrawMesh(b_leg.meshes[0],b_leg.materials[1],MatrixMultiply(MatrixScale(0.8048076923,0.8043052838,0.8041305796),legApos));
+        DrawMesh(b_leg.meshes[0],b_leg.materials[1],MatrixMultiply(MatrixScale(0.8048076923,0.8043052838,0.8041305796),legBpos));
+        DrawMesh(b_tarm.meshes[0],b_tarm.materials[1],MatrixMultiply(MatrixScale(0.6875,0.9083402147f,0.6875),armApos));
+        DrawMesh(b_tarm.meshes[0],b_tarm.materials[1],MatrixMultiply(MatrixScale(0.6875,0.9083402147f,0.6875),armBpos));
+        DrawMesh(b_barm.meshes[0],b_barm.materials[1],MatrixMultiply(MatrixScale(0.5178907721,0.4793028322f,0.5178907721),armCpos));
+        DrawMesh(b_barm.meshes[0],b_barm.materials[1],MatrixMultiply(MatrixScale(0.5178907721,0.4793028322f,0.5178907721),armDpos));
         DrawMesh(b_dot.meshes[0],b_dot.materials[1],MatrixMultiply(MatrixScale(0.01200377729f,0.0135f,0.0120024931f),MatrixTranslate(plrdot.x,plrdot.y,plrdot.z)));
-        //DrawCylinderEx(Vector3Add(headonlypos,(Vector3){0,.8}),plrdot,.15,.15,3,BLACK);
-        DrawCylinderEx(Vector3Add(headonlypos,Vector3Scale(matup(headpos),.8)),plrdot,.12,.12,3,BLACK);//.15
+        DrawCylinderEx(Vector3Add(headonlypos,Vector3Scale(matup(headpos),.8)),plrdot,.12,.12,3,BLACK);
         
-        //the hat                               (replace this with vectror3s later)
+        //the hat                               (replace this with vectror3s of hat ids later)
         
         Matrix headrot = headpos;
         headrot.m12 = 0.0f;
@@ -2085,25 +2052,23 @@ void drawbeeb(){
     }
     if(plrgotice){
         Matrix charpos = MatrixTranslate(plrpos.x,plrpos.y,plrpos.z);
-        //uint8_t icedrot = rand()%4;
         Matrix icedpos = MatrixMultiply(MatrixScale(.0309,.03088978424,.0308824803),MatrixMultiply(MatrixRotateXYZ((Vector3){0,0,(float)icedrot*(pi/2)}),mpsrot));
         DrawMesh(ml_icedcream.meshes[0],ml_icedcream.materials[1],MatrixMultiply(icedpos,MatrixMultiply(charpos,MatrixTranslate(0,4,0))));
     }
 }
 
-#define P_TALL 2.868053436279297f//2.86f or 3.5f
+#define P_TALL 2.868053436279297f
 RayCollision beebtryground(Vector3 off, float raydist){
     RayCollision skibidi = {0};
     plrg = false;
     float closest = 67;
-    for(int i=0;i<gm3d.count;i++){ //TODONE: add 4 more lines aroudn the middle one that are rays and detect ground (they only go if the first fails)
+    for(int i=0;i<gm3d.count;i++){
         if(!gm3d.items[i].nocol){
             RayCollision test = GetRayCollisionMesh((Ray){Vector3Add(plrpos,off),(Vector3){0,-1,0}},gm3d.items[i].mdl.meshes[0],gm3d.items[i].mat);
             if(test.hit&&test.distance<=raydist&&test.normal.y>=.6&&test.distance<closest){
                 plrg = true;
                 skibidi = test;
                 closest=test.distance;
-                //break;
             }
         }
     }
@@ -2125,7 +2090,6 @@ RayCollision beebtrywall(Vector3 dir, float raydist){
                 plrwallpoint = toilets.point;
                 plrwallnorm = toilets.normal;
                 closest=toilets.distance;
-                //break;
             }
         }
     }
@@ -2134,7 +2098,7 @@ RayCollision beebtrywall(Vector3 dir, float raydist){
 
 bool debugmode = false;
 #define P_DEBUGSPEED 2
-#define P_BFORCE .012f//.013f
+#define P_BFORCE .012f
 int mx;
 int my;
 RayCollision skibidi = {0};
@@ -2166,7 +2130,7 @@ void stepchar(){
     float yimh = 0;
     float yimv = 0;
     if(rightcursor){
-        Vector2 delta = GetMouseDelta(); //.75f
+        Vector2 delta = GetMouseDelta();
         yimh += delta.x*sensitivity;
         yimv += delta.y*sensitivity;
     }
@@ -2226,18 +2190,8 @@ void stepchar(){
         Vector3 forwardmover = (Vector3){sin((camh*pi)/-180),0,cos((camh*pi)/180)};
         Vector3 sidemover = (Vector3){forwardmover.z,0,-forwardmover.x};
         
-        //roblox collision step was originally here
         Vector3 orientrightvector = Vector3Normalize((Vector3){-plrorient.z,0,plrorient.x});
         
-        //ground ray was originally here
-        
-        /*if((plrpole||plrswimming)||skibidi.normal.y<.6){ //add onrope before pole and swimming later, also does this if door
-            if(plrg&&plrsliding&&botand+1.3>0&&!plrrolling){
-                plrvel=v2(plrvel);
-                plrvel=Vector3Add(plrvel,(Vector3){0,Vector3Length(plrvel)/2,0});
-            }
-            plrg=false;
-        }*/
         Vector3 mpspar = Vector3Subtract(plrpos,(Vector3){0,2.5,0});
         if((!oplrg)&&plrg){
             particle(0,plrpound?8:3,true,mpspar,1);
@@ -2310,10 +2264,8 @@ void stepchar(){
                 if(!plroldwall){
                     if(Vector3DotProduct(v2(plrvel),plrpoint)>0&&Vector3Length(plrdir)>.5){
                         Vector3 wallnormright = Vector3Normalize(Vector3CrossProduct(plrwallnorm,(Vector3){0,1,0}));
-                        //Vector3 pointupvector = {0,1,0};
                         Vector3 tforce = Vector3Add(Vector3Scale(wallnormright,-Vector3DotProduct(plrwallnorm,pointrightvector)),
                         (Vector3){0,-Vector3DotProduct(plrwallnorm,plrpoint),0});
-                        //Vector3 tforce = (Vector3){0,-Vector3DotProduct(plrwallnorm,plrpoint),0};
                         plrvel = Vector3Add(v2(plrvel),(Vector3){0,(10+(Vector3Normalize(tforce).y*30)),0});
                     }
                 }
@@ -2362,10 +2314,8 @@ void stepchar(){
         if(plrsliding){
             if(Vector3Length(v2(plrvel))>.2){
                 if(Vector3DotProduct(plrpoint,Vector3Normalize(plrvel))<0){
-                    //plrpoint = Vector3Normalize(Vector3Lerp(plrpoint,Vector3Normalize(Vector3Subtract(Vector3Scale(plrdir,2),v2(plrvel))),dt*4));
                     plrpoint = qvecerp(plrpoint,Vector3Normalize(Vector3Subtract(Vector3Scale(plrdir,2),v2(plrvel))),dt*4);
                 }else{
-                    //plrpoint = Vector3Normalize(Vector3Lerp(plrpoint,Vector3Normalize(Vector3Add(Vector3Scale(plrdir,2),v2(plrvel))),dt*4));
                     plrpoint = qvecerp(plrpoint,Vector3Normalize(Vector3Add(Vector3Scale(plrdir,2),v2(plrvel))),dt*4);
                 }
             }
@@ -2376,7 +2326,7 @@ void stepchar(){
             plrattack=false;
         }else if(Vector3Length(plrdir)>.2f&&(plrg&&plrtimeland<18)){
             if(plrcrouch){
-                plrpoint = qvecerp(plrpoint,plrdir,dt*5);//Vector3Normalize(Vector3Lerp(plrpoint,Vector3Normalize(plrdir),dt*5));
+                plrpoint = qvecerp(plrpoint,plrdir,dt*5);
             }else{
                 plrpoint = plrdir;
                 plrdancing=false;
@@ -2435,7 +2385,6 @@ void stepchar(){
         aterp+=(plrattack-aterp)*(dt*10);
         dancerp+=(plrdancing-dancerp)*(dt*10);
         swiperp+=(plrswip-swiperp)*(dt*10);
-        //swiperp+=((plrswip||IsKeyDown(KEY_J))-swiperp)*dt*10;
         
         //ok were back now
         float force = 600;
@@ -2471,7 +2420,7 @@ void stepchar(){
         }
         bool tojump = IsKeyDown(KEY_SPACE);
         bool todive = IsKeyDown(KEY_LEFT_SHIFT);
-        speedy*=plrwallrun?1:plrswimming?fmin(1,Vector3Length(plrdir)+abs(tojump-todive))*1.4:Vector3Length(plrdir); //wallrun and 1 or swimming and math.min(1,dir.magnitude+math.abs(tojump-todive))*1.4 or dir.magnitude
+        speedy*=plrwallrun?1:plrswimming?fmin(1,Vector3Length(plrdir)+abs(tojump-todive))*1.4:Vector3Length(plrdir);
         walklerp+=(speedy-walklerp)*dt*4;
         walktick+=dt*speedy*(1-fabs(fallerp));
         
@@ -2503,7 +2452,6 @@ void stepchar(){
             gravmult=0;
         }else if(plrwallrun){
             imp = (fabs(Vector3DotProduct(plrdir,plrpoint))>.9)?0:1;
-            //plrpoint = Vector3Normalize(Vector3Lerp(plrpoint,Vector3Normalize(Vector3Add(Vector3Scale(plrwallnorm,-2),Vector3Scale(plrdir,imp))),dt*3));
             plrpoint = qvecerp(plrpoint,Vector3Normalize(Vector3Add(Vector3Scale(plrwallnorm,-2),Vector3Scale(plrdir,imp))),dt*3);
             gravmult=.5;
         }else{
@@ -2523,16 +2471,10 @@ void stepchar(){
                 Vector3 bforce = Vector3Scale(Vector3Subtract(plrledgepoint,plrpos),4800*P_BFORCE);//400
                 plrvel=Vector3Add(plrvel,bforce);
                 plrvel=Vector3Multiply(plrvel,(Vector3){.1,.1,.1}); //bdamp
-                //gravmult=0;
             }else if(plrwallrun){
-                //float imp = (fabs(Vector3DotProduct(plrdir,plrpoint))>.9)?0:1;
-                //plrpoint = Vector3Normalize(Vector3Lerp(plrpoint,Vector3Normalize(Vector3Add(Vector3Scale(plrwallnorm,-2),Vector3Scale(plrdir,imp))),dt*3));
                 Vector3 bforce = Vector3Add(Vector3Scale(plrpoint,imp*400*P_BFORCE /*150*/),Vector3Scale(plrwallnorm,-100*P_BFORCE));
                 plrvel=Vector3Add(plrvel,bforce);
-                //plrvel=Vector3Multiply(plrvel,(Vector3){.93,.96,.93}); //bdamp
                 plrvel=Vector3Multiply(plrvel,(Vector3){.94,.96,.94}); //bdamp
-                //plrvel=Vector3Multiply(plrvel,(Vector3){.96,.96,.96}); //bdamp
-                //gravmult=.5;
             }else{
                 Vector3 bforce = Vector3Scale(plrdir,force*P_BFORCE);//.02f//12//180
                 if(plrg){
@@ -2543,7 +2485,6 @@ void stepchar(){
                 }
                 plrvel=Vector3Add(plrvel,bforce);
                 plrvel=Vector3Multiply(plrvel,(Vector3){damp.x,plrg?.2f:damp.y,damp.z}); //bdamp
-                //gravmult=1;
             }
         }
         //actions,like jumping
@@ -2654,7 +2595,7 @@ void stepchar(){
                     plrdjump=true;
                     plrvel=Vector3Add(v2(plrvel),(Vector3){0,40});
                     PlaySound(s_djump);
-                    fallvr*=-1; //add the cool djump effect later
+                    fallvr*=-1;
                     plrdjumptimer=27;
                     if(Vector3Length(plrdir)>.2f){
                         plrpoint = plrdir;
@@ -2705,7 +2646,7 @@ void stepchar(){
                     plrsliding=true;
                     plrrolling=false;
                     plrdjump=true;
-                    plrvel = Vector3Add(Vector3Scale(plrpoint,40),(Vector3){0,20}); //normally would be 30 if on ground, but is broken somehow
+                    plrvel = Vector3Add(Vector3Scale(plrpoint,40),(Vector3){0,20}); //idk how to replicate cuz sometimes its 30 sometimes its not (in the og game)
                     plrg=false;
                     PlaySound(s_dive);
                     plranchored=false;
@@ -2791,9 +2732,6 @@ void stepchar(){
         }
         if(plrtimeland>0){
             plrtimeland--;
-            /*if(plrtimeland==18){//.2 secs after timeland
-                
-            }*/
         }
         if(walltimer>0){
             walltimer--;
@@ -2821,15 +2759,10 @@ void stepchar(){
             Vector3 mps = Vector3Subtract(plrpos,(Vector3){0,1,0});
             float bs = attacktimer>0?2.5:1;
             Vector3 bsvec = Vector3Scale((Vector3){1.6,2,1.6},bs);
-            //Vector3 bsvecsub = Vector3Scale((Vector3){1.6,0.5,1.6},bs);
             BoundingBox bsbox = (BoundingBox){
                 Vector3Subtract(mps,bsvec),
                 Vector3Add(mps,bsvec)
             };
-            //BoundingBox bsbox2 = (BoundingBox){ //for cork boxes
-            //    Vector3Subtract(plrpos,bsvecsub),
-            //    Vector3Add(mps,bsvec)
-            //};
             BoundingBox grbox = (BoundingBox){
                 Vector3Add(plrpos,(Vector3){-.5,-P_TALL-.05,-.5}),
                 Vector3Add(plrpos,(Vector3){.5,-P_TALL+.05,.5})
@@ -2905,9 +2838,7 @@ void stepchar(){
             }
         }
         if(!plranchored){
-            //roblox does collision first? i think
-            //no iot does collision last cuz that feels Smoother... Oh yeah~
-            //woah sus
+            //roblox collision step not really
             plrvel = Vector3Add(plrvel,(Vector3){0,-1.31f*gravmult,0});
             if(Vector3Length(plrvel)>300){
                 plrvel = Vector3Scale(Vector3Normalize(plrvel),300);
@@ -2915,28 +2846,17 @@ void stepchar(){
             for(i=0;i<4;i++){
                 Vector3 slowplrvel = Vector3Scale(plrvel,.25f/60);
                 plrpos = Vector3Add(plrpos,slowplrvel);
-                //if(plrg){
-                //    plrpos = Vector3Add(plrpos,(Vector3){0,Vector3Length(v2(slowplrvel))*(skibidi.normal.y/0.707106769f)});
-                //}      //this if statement caused beebo hopping off the ledges
-                //for(int j=1;j<2;j++){
-                    scuffedrays colres = scuffedcol(plrpos,1.5f,Vector3Normalize(plrvel),i==3);
-                    if(colres.lowind!=-1){
-                        //Vector3 oplrvel = plrvel;
-                        plrvel = projv3(plrvel,colres.results[colres.lowind].normal);
-                        //if(!Vector3Equals(plrvel,oplrvel)){
-                            plrpos = Vector3Subtract(colres.results[colres.lowind].point,Vector3Scale(colres.v3used,1.5f));
-                            //if(plrg){
-                            //    plrpos = Vector3Subtract(plrpos,(Vector3){0,.5});
-                            //}
-                        //}
-                    }
-                //}
+                scuffedrays colres = scuffedcol(plrpos,1.5f,Vector3Normalize(plrvel),i==3);
+                if(colres.lowind!=-1){
+                    plrvel = projv3(plrvel,colres.results[colres.lowind].normal);
+                    plrpos = Vector3Subtract(colres.results[colres.lowind].point,Vector3Scale(colres.v3used,1.5f));
+                }
             }
-            //were still in roblox collision step so this is bodygyro movement
+            //this is bodygyro movement
             plrorient = Vector3Normalize(Vector3Lerp(plrorient,plrgyro,dt*10));
         }
         //ground ray
-        float raydist = 3.5;//P_TALL;//+0.01f;
+        float raydist = 3.5;
         if(plrg){
             raydist += Vector3Length(v2(plrvel))/30;
         }
@@ -2948,9 +2868,9 @@ void stepchar(){
                 if(!plrg){
                     skibidi = beebtryground(Vector3Scale(plrorient,-.9f),raydist);
                     if(!plrg){
-                        skibidi = beebtryground(Vector3Scale(orientrightvector,-.9f),raydist); //sidemover is a left vector, so the scale is opposited
+                        skibidi = beebtryground(Vector3Scale(orientrightvector,-.9f),raydist);
                         if(!plrg){
-                            skibidi = beebtryground(Vector3Scale(orientrightvector,.9f),raydist); //sidemover is a left vector, so the scale is opposited
+                            skibidi = beebtryground(Vector3Scale(orientrightvector,.9f),raydist);
                         }
                     }
                 }
@@ -2977,7 +2897,7 @@ void stepchar(){
             }
         }
         if(snapcam){
-            yimh=Vector3DotProduct(camlook,snapto)*(.2*M_TODEG);//   /5
+            yimh=Vector3DotProduct(camlook,snapto)*(.2*M_TODEG);
             if(fabs(Vector3DotProduct(camlook,snapto))<.01){snapcam=false;}
         }
         if(Vector2Length((Vector2){yimh,yimv})>.0001||stillcam||camzoom==.5){
@@ -2990,9 +2910,6 @@ void stepchar(){
                 camv=-1.5*M_TODEG;
             }
         }else{
-            //Quaternion camnew = QuaternionFromMatrix(
-            //MatrixLookAt((Vector3){0},Vector3Multiply(Vector3Subtract(v2(camera.position),v2(camera.target)),(Vector3){-1,1,1}),(Vector3){0,1}));
-            //camh = QuaternionToEuler(camnew).y*M_TODEG;
             Vector3 test = Vector3Subtract(v2(plrpos),v2(camera.position));
             float thing = atan2f(test.x,test.z);
             camh = -thing*M_TODEG;
@@ -3028,7 +2945,6 @@ void stepchar(){
     }
     camera2.target = Vector3Normalize(Vector3Subtract(camera.target,camera.position));
     camera2.position = (Vector3){0};
-    //plrgotice=IsKeyDown(KEY_H);
     if(IsKeyPressed(KEY_F)){
         stillcam=!stillcam;
     }
@@ -3051,8 +2967,6 @@ int main(){
     //SetConfigFlags(FLAG_WINDOW_TRANSPARENT);
     InitWindow(960, 540, "Robot 64");
     rlEnableDepthTest();
-//#if defined(PLATFORM_WEB)
-//#else
     BeginDrawing();
     ClearBackground(BLACK);
     Image img = LoadImageFromMemory(".png",img_startup,sizeof(img_startup));
@@ -3060,7 +2974,6 @@ int main(){
     DrawTexture(startuptex,339,210,WHITE);
     EndDrawing();
     UnloadImage(img);
-//#endif
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
 #if defined(PLATFORM_WEB)
     MaximizeWindow();
@@ -3070,7 +2983,7 @@ int main(){
     srand(time(NULL));
     
     //load fonts
-    r64font = LoadFontEx("font/r64.ttf",64,NULL,0);//128
+    r64font = LoadFontEx("font/r64.ttf",64,NULL,0);
     SetTextureFilter(r64font.texture,TEXTURE_FILTER_BILINEAR);
     
     //load textures
@@ -3284,8 +3197,6 @@ int main(){
     p_sun = LoadModelFromMesh(GenMeshPlaneT(1,1,1,1,1,-1));
     p_sun.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = t_sun;
 	
-    //camera.position = (Vector3){ 3.0f, 3.0f, 2.0f };
-    //camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
     camera.position = (Vector3){ 0.0f, 0.0f, 0.0f };
     camera.target = (Vector3){ 0.0f, 0.0f, 1.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
@@ -3333,7 +3244,6 @@ static void dotheframecrap(){
             ToggleBorderlessWindowed();
         }else{
             Vector2 wp = GetWindowPosition();
-            //int mt = GetCurrentMonitor();
             fullposx = wp.x;
             fullposy = wp.y;
             fullsizx = sw;
@@ -3345,7 +3255,6 @@ static void dotheframecrap(){
         sh = GetScreenHeight();
     }
 #endif
-    //bool opause = paused;
     if((IsKeyPressed(KEY_ESCAPE)||IsKeyPressed(KEY_P)||IsKeyPressed(KEY_GRAVE))&&usechar){
         if(paused){
             ResumeMusicStream(s_slide);
@@ -3454,16 +3363,6 @@ static void dotheframecrap(){
 }
 
 static void UpdateDrawFrame(void){
-    // Update
-    //----------------------------------------------------------------------------------
-    //Vector3 cf = Vector3Scale(Vector3Normalize(Vector3Subtract(camera.target,camera.position)),camzoom*10.0f);
-    //camera.position = Vector3Subtract(plrpos,cf);
-    //camera.target = plrpos;
-    //UpdateCamera(&camera, CAMERA_ORBITAL);
-    //----------------------------------------------------------------------------------
-
-    // Draw
-    //----------------------------------------------------------------------------------
     BeginDrawing();
         
         ClearBackground(BLANK);
@@ -3473,14 +3372,9 @@ static void UpdateDrawFrame(void){
             //skybox
             rlDisableBackfaceCulling();
             rlDisableDepthMask();
-            //DrawModel(skybox, (Vector3){0}, 1.0f, WHITE);
-            DrawMesh(skybox.meshes[0],skybox.materials[0],MatrixRotateXYZ((Vector3){0,pi/2,0}));
-            //DrawBillboard(camera2,t_sun,sunpos,.1,WHITE);
-            //tex3d(t_sun,Vector3Add(camera.position,sunpos),.1,WHITE);
+            DrawMesh(skybox.meshes[0],skybox.materials[0],MatrixIdentity());
             rlEnableBackfaceCulling();
-            //rlDisableDepthTest();
-            //DrawModel(p_break,Vector3Add(camera.position,sunpos),.1,WHITE);
-            if(!loading){ //this will cause REALLY REALY weird glitch if not in this if statemnt
+            if(!loading){
                 Vector3 gop = Vector3Add(camera.position,sunpos);
                 Vector3 v2sunpos = v2(sunpos);
                 Matrix sunlook1 = QuaternionToMatrix(QuaternionFromVector3ToVector3((Vector3){0,-1,0},(Vector3){0,sunpos.y,Vector3Length(v2sunpos)}));
@@ -3490,20 +3384,12 @@ static void UpdateDrawFrame(void){
                     MatrixMultiply(MatrixScale(.21,.21,.21),sunlook),
                     MatrixTranslate(gop.x,gop.y,gop.z)
                 ));
-                //DrawModel(p_break,Vector3Add(camera.position,sunpos),.01,WHITE);
             }
-            //rlEnableDepthTest();
 			rlEnableDepthMask();
-            //rlEnableBackfaceCulling();
             
             int i;
-            //BeginShaderMode(shader);
-            //tex3d(t_sparkle,(Vector3){0},1);
-            //DrawCube((Vector3){1,0},1,1,1,WHITE);
-            //rlEnableWireMode();
             for(i=0;i<gm3d.count;i++){
                 Terrain *v = &gm3d.items[i];
-                //DrawModel(gm3d.items[i].mdl,(Vector3){gm3d.items[i].x,gm3d.items[i].y,gm3d.items[i].z},gm3d.items[i].s,WHITE);
                 if(!v->hide){
                     DrawMesh(v->mdl.meshes[0],v->mdl.materials[v->gen?0:1],v->mat);
                 }
@@ -3580,19 +3466,15 @@ static void UpdateDrawFrame(void){
                                 DrawMesh(waterm.meshes[0],waterm.materials[0],mat);
                                 DrawMesh(waterm.meshes[0],waterm.materials[0],MatrixMultiply(MatrixRotateXYZ((Vector3){pi,pi,0}),mat));
                                 UnloadModel(waterm);
-                                //DrawCubeV(entlist.items[i].pos,entlist.items[i].size,BLUE);
                                 break;
                         }
                     }
                 }
             }
 #if defined(PLATFORM_WEB)
-            DrawCube((Vector3){0},0,0,0,BLACK);
+            DrawMesh(ml_candy.meshes[0],ml_candy.materials[1],MatrixScale(.01,.01,.01)); //if i dont do this, html visuals will freak out
 #endif
-            //EndShaderMode();
-            //rlDisableWireMode();
-            
-            /*for(int8_t x=-1;x<2;x++){
+            /*for(int8_t x=-1;x<2;x++){               //hitbox vizualizer
                 for(int8_t y=-1;y<2;y++){
                     for(int8_t z=-1;z<2;z++){
                         if(!((x==0)&&(y==0)&&(z==0))){
@@ -3605,10 +3487,6 @@ static void UpdateDrawFrame(void){
 
         EndMode3D();
 
-        //DrawText("test", 10, 40, 20, DARKGRAY);
-
-        //DrawFPS(10, 10);
-        //r64text("testing testing testing",sw/2,sh/2,sh/10,.5f,.5f,WHITE);
         if(map==M_TITLE){
             Vector2 m = GetMousePosition();
             bool h = false;
@@ -3640,9 +3518,7 @@ static void UpdateDrawFrame(void){
             r64text("New Game",sw/2,sh*.8f,sh*0.06f,.5f,0,WHITE);
             r64text("Speedrun",sw/2,sh*.9f,sh*0.06f,.5f,0,WHITE);
             float rot = fmodf(GetTime()*80.0f,360);
-            //Vector2 off = {cos((rot*pi)/180)*(sh*-0.03f),0};
             Vector2 off = Vector2Scale(fixrotpos2(rot),sh*-0.03f);
-            //DrawTextureEx(spinny,(Vector2){sw*.35f,sh*.7f},0,0.0078125f*(sh*0.06f),RED);
             DrawTextureEx(spinny,Vector2Add((Vector2){(sw*.35f)+(sh*0.03f),(sh*.73f)+(titleselt*(sh*.1f))},off),rot,0.0078125f*(sh*0.06f),WHITE);
         }else{
             int inset = 36;
@@ -3698,7 +3574,6 @@ static void UpdateDrawFrame(void){
                     if(t>1){
                         loading=true;
                         loadstate=2;
-                        //r64text("Loading...",sw*.95f,sh*.95f,sh*0.04f,1.0f,1.0f,WHITE);
                     }
                 }else if(loadstate==2){
                     usechar=true;
@@ -3709,16 +3584,12 @@ static void UpdateDrawFrame(void){
                 trsing = false;
             }
         }
-        //char str1[50];
-        //snprintf(str1,sizeof(str1),"%.3f",sin(pi/2));
-        //r64text(str1,20,20,20,0,0,WHITE);
         if(paused){
             Vector2 m = GetMousePosition();
             r64text("Paused",sw/2,sh/2,sh*0.06f,.5f,.5f,WHITE);
             r64text("Sensitivity:",sw/2,sh*0.55,sh*0.04f,.5f,.5f,WHITE);
             DrawRectangleV((Vector2){sw*.4,sh*.6},(Vector2){sw*.2,sh*.02},WHITE);
             DrawRectangleV((Vector2){sw*.395+sensitivity*sw*.2,sh*.59},(Vector2){sw*.01,sh*.04},GREEN);
-            //r64text(TextFormat("%.6f",sensitivity),20,20,20,0,0,WHITE);
             if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)&&m.y>sh*.58&&m.y<sh*.64){
                 sensitivity = fmax(0,fmin(1,(m.x/sw)*5-(1/.5)));
             }
@@ -3730,9 +3601,7 @@ static void UpdateDrawFrame(void){
         
         //except for debugging stuff because that oesnt really matter
         // DEBUGGGING TEXTs
-        //r64text(TextFormat("%.6f %.6f %.6f",DEBUGrot.x,DEBUGrot.y,DEBUGrot.z),20,20,20,0,0,WHITE);
         r64text(TextFormat("terrain count: %i\nentity count: %i",gm3d.count,entlist.count),20,20,20,0,0,WHITE);
 
     EndDrawing();
-    //----------------------------------------------------------------------------------
 }
