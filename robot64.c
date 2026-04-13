@@ -1776,7 +1776,7 @@ Vector3 vistorsopos = {0};
 Matrix vistorsorot = {0};
 Vector3 shadowpos = {0,-10000,0};
 bool paused = false;
-uint8_t pausemenu = 0;
+uint8_t pausemenu = 0; //id of the menu the pausescreen currently shows
 uint8_t icedrot = 0;
 void drawbeeb(){
     Matrix torsopos = MatrixIdentity();
@@ -3001,7 +3001,7 @@ int main(){
     srand(time(NULL));
     
     //load fonts
-    r64font = LoadFontEx("font/r64.ttf",64,NULL,0);
+    r64font = LoadFontEx("font/r64.ttf",128,NULL,0);
     SetTextureFilter(r64font.texture,TEXTURE_FILTER_BILINEAR);
     
     //load textures
@@ -3616,13 +3616,26 @@ static void UpdateDrawFrame(void){
             DrawTextureEx(t_frame,(Vector2){framex,framey},0,framesize/512,WHITE);
             
             Vector2 m = GetMousePosition();
-            r64text("Paused",sw/2,framey+(framesize*.047),framesize*.12,.5,0,WHITE);
-            
-            r64text("Sensitivity:",sw/2,sh*0.55,sh*0.04f,.5f,.5f,WHITE);
-            DrawRectangleV((Vector2){sw*.4,sh*.6},(Vector2){sw*.2,sh*.02},WHITE);
-            DrawRectangleV((Vector2){sw*.395+sensitivity*sw*.2,sh*.59},(Vector2){sw*.01,sh*.04},GREEN);
-            if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)&&m.y>sh*.58&&m.y<sh*.64){
-                sensitivity = fmax(0,fmin(1,(m.x/sw)*5-(1/.5)));
+            switch(pausemenu){
+                case 0:
+                    r64text("Paused",sw/2,framey+(framesize*.047),framesize*.12,.5,0,WHITE);
+                    
+                    r64text("Resume",sw/2,framey+(framesize*.24),framesize*.09,.5,0,WHITE);
+                    r64text("Icecreams",sw/2,framey+(framesize*.34),framesize*.09,.5,0,WHITE);
+                    r64text("Snapshot Mode",sw/2,framey+(framesize*.44),framesize*.09,.5,0,WHITE);
+                    r64text("Clothing",sw/2,framey+(framesize*.54),framesize*.09,.5,0,WHITE);
+                    r64text("Follow Camera",sw/2,framey+(framesize*.64),framesize*.09,.5,0,WHITE);
+                    r64text("Back to Hub",sw/2,framey+(framesize*.74),framesize*.09,.5,0,WHITE);
+                    r64text("Quit to Title",sw/2,framey+(framesize*.84),framesize*.09,.5,0,WHITE);
+                    
+                    r64text("Sensitivity:",sw/2,sh*0.9,sh*0.04f,.5f,.5f,WHITE);
+                    DrawRectangleV((Vector2){sw*.4,sh*.95},(Vector2){sw*.2,sh*.02},WHITE);
+                    DrawRectangleV((Vector2){sw*.395+sensitivity*sw*.2,sh*.94},(Vector2){sw*.01,sh*.04},GREEN);
+                    if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)&&m.y>sh*.93&&m.y<sh*.99){
+                        sensitivity = fmax(0,fmin(1,(m.x/sw)*5-(1/.5)));
+                        sensitivity = round(sensitivity*8)/8;
+                    }
+                    break;
             }
         }
         //DONT PUT ANYTHING AFTER THIS YOU LITTLE DIDDYBLUD, this is the cursor draw
