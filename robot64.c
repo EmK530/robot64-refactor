@@ -101,6 +101,7 @@ typedef struct {
     Vector3 pos;
     Vector3 size;
     int type; //type id of thing
+    Model mdl; //model for rendering
     unsigned short uid;
     bool disabled;
 } Entity;
@@ -1239,6 +1240,9 @@ void map_hub(){
     tme = crEnt(OTYPE_ICED,-141.19,38,91.62, 1.545, 3.197, 1.783);
     entlist.items[i]=tme;i++;
     tme = crEnt(OTYPE_WATR,.026,-3.98,666.921,1391.189,6,932.26);
+    tme.mdl = LoadModelFromMesh(GenMeshPlaneT(tme.size.x+15,tme.size.z+15,1,1,20,20));
+    tme.mdl.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = t_water;
+    tme.mdl.materials[0].shader = shader;
     entlist.items[i]=tme;i++;
     
     tme = crEnt(OTYPE_CAND,-48,15,96  ,4,4,4);entlist.items[i]=tme;i++;
@@ -1454,6 +1458,9 @@ void map_turtle(){
     addvar(tme.uid,V_TELE_TOMAP,M_HUB);
     addvar(tme.uid,V_TELE_TOX,27.621);addvar(tme.uid,V_TELE_TOY,21.601);addvar(tme.uid,V_TELE_TOZ,100.188);
     tme = crEnt(OTYPE_WATR,106.529,42.002,-147.059, 258,61.26,286.5);
+    tme.mdl = LoadModelFromMesh(GenMeshPlaneT(tme.size.x+15,tme.size.z+15,1,1,20,20));
+    tme.mdl.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = t_water;
+    tme.mdl.materials[0].shader = shader;
     entlist.items[i]=tme;i++;
     
     entlist.count = i;
@@ -3478,25 +3485,19 @@ static void UpdateDrawFrame(void){
                                 ));
                                 break;
                             case OTYPE_WATR:
-                                Model waterm = LoadModelFromMesh(GenMeshPlaneT(v->size.x+15,v->size.z+15,1,1,20,20));
-                                waterm.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = t_water;
-                                waterm.materials[0].shader = shader;
+                                rlDisableBackfaceCulling();
                                 Matrix mat = MatrixTranslate(
                                     v->pos.x+sin(gtick/4)*10,
                                     v->pos.y+v->size.y/2,
                                     v->pos.z+cos(gtick/4)*10
                                 );
-                                DrawMesh(waterm.meshes[0],waterm.materials[0],mat);
-                                DrawMesh(waterm.meshes[0],waterm.materials[0],MatrixMultiply(MatrixRotateXYZ((Vector3){pi,pi,0}),mat));
-                                UnloadModel(waterm);
+                                DrawMesh(v->mdl.meshes[0],v->mdl.materials[0],mat);
+                                rlEnableBackfaceCulling();
                                 break;
                         }
                     }
                 }
             }
-#if defined(PLATFORM_WEB)
-            DrawMesh(ml_candy.meshes[0],ml_candy.materials[1],MatrixScale(.01,.01,.01)); //if i dont do this, html visuals will freak out
-#endif
             /*for(int8_t x=-1;x<2;x++){               //hitbox vizualizer
                 for(int8_t y=-1;y<2;y++){
                     for(int8_t z=-1;z<2;z++){
