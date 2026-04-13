@@ -54,6 +54,9 @@ dkms.conf
 # debug information files
 *.dwo
 
+# .vscode Metadata
+.vscode/
+
 # other bullcrap
 robot64.html
 robot64.zip
