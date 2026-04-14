@@ -25,9 +25,12 @@ void main(){
     oopssorry[1] = normalize(oopssorry[1]);
     oopssorry[2] = normalize(oopssorry[2]);
     vec3 thenewnorm = oopssorry * vertexNormal;
-    //fragShade = max(dot(thenewnorm,nLightDir)*.2+.9,0);
-    fragShadeR = (abs(dot(thenewnorm,nLightDir))*bright+ambientR+.75)/2.5;
-    fragShadeG = (abs(dot(thenewnorm,nLightDir))*bright+ambientG+.75)/2.5;
-    fragShadeB = (abs(dot(thenewnorm,nLightDir))*bright+ambientB+.75)/2.5;
+    float absdot = dot(thenewnorm,nLightDir);
+    if(absdot<0.0){
+        absdot*=-.5;
+    }
+    fragShadeR = (absdot*bright+ambientR+1.0)/2.9;
+    fragShadeG = (absdot*bright+ambientG+1.0)/2.9;
+    fragShadeB = (absdot*bright+ambientB+1.0)/2.9;
     gl_Position = mvp * vec4(vertexPosition,1.0);
 }

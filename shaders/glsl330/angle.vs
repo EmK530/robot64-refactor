@@ -29,9 +29,9 @@ void main(){
     if(absdot<0){
         absdot*=-.5;
     }
-    //fragShadeR = (absdot*bright+ambientR+1)/3;
-    fragShadeR = (absdot*bright+ambientR+1)/2.9;
-    fragShadeG = (absdot*bright+ambientG+1)/2.9;
-    fragShadeB = (absdot*bright+ambientB+1)/2.9;
+    //fragShadeR = (absdot*bright+ambientR+1.0)/3;
+    fragShadeR = (absdot*bright+ambientR+1.0)/2.9;
+    fragShadeG = (absdot*bright+ambientG+1.0)/2.9;
+    fragShadeB = (absdot*bright+ambientB+1.0)/2.9;
     gl_Position = mvp * vec4(vertexPosition,1.0);
 }
