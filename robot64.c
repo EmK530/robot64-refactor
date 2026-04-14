@@ -1487,7 +1487,6 @@ void map_turtle(){
 
 //vars
 Camera camera = { 0 };
-Camera camera2 = { 0 };
 uint32_t frame = 0;
 uint32_t bus = 0;
 
@@ -2141,7 +2140,7 @@ float CalculateAttenuation(float distance, float maxDistance, float rolloff)
 }
 
 // Plays a sound at 3d coordinates. Usage: ConfigureSoundForPosition(camera, sound, (Vector3){x,y,z}, maxDistance);
-void ConfigureSoundForPosition(Camera listener, Sound sound, Vector3 position, float maxDist, float rolloff)
+void ConfigureSoundForPosition(Camera listener, Sound sound, Vector3 position, float maxDist, float rolloff,float volumeModifier)
 {
     Vector3 direction = Vector3Subtract(position, listener.position);
     float distance = Vector3Length(direction);
@@ -2157,20 +2156,20 @@ void ConfigureSoundForPosition(Camera listener, Sound sound, Vector3 position, f
 
     float pan = 0.5f+(0.5f*Vector3DotProduct(normalizedDirection, right));
 
-    SetSoundVolume(sound, attenuation);
+    SetSoundVolume(sound, attenuation*volumeModifier);
     SetSoundPan(sound, pan);
 }
 
-void PlaySoundAtPosition(Sound sound, Vector3 position, float *maxDist)
+void PlaySoundAtPosition(Sound sound, Vector3 position, float *maxDist,float volumeModifier)
 {
     float md = (maxDist != NULL) ? *maxDist : 100.0f; // Default max distance if not provided
-    ConfigureSoundForPosition(camera, sound, position, md, soundRolloffGlobal);
+    ConfigureSoundForPosition(camera, sound, position, md, soundRolloffGlobal,volumeModifier);
     PlaySound(sound);
 }
 
-void PlaySoundAtBeebo(Sound sound)
+void PlaySoundAtBeebo(Sound sound,float volumeModifier)
 {
-    PlaySoundAtPosition(sound, vistorsopos, NULL);
+    PlaySoundAtPosition(sound, vistorsopos, NULL,volumeModifier);
 }
 
 bool debugmode = false;
@@ -2279,7 +2278,7 @@ void stepchar(){
             plrattack=false;
             plrwallrun=false;
             plrrolling=false;
-            PlaySoundAtBeebo(s_land);
+            PlaySoundAtBeebo(s_land,1);
             walklerp=0;
             plrdjumptimer=0;
         }else if((!plrg)&&oplrg){
@@ -2432,13 +2431,13 @@ void stepchar(){
         float complexcrap = floor(botand/(pi*2)+.5f);
         if(complexcrap!=flipo){
             flipo = complexcrap;
-            PlaySoundAtBeebo(s_flip);
+            PlaySoundAtBeebo(s_flip,.5);
         }
         if(plrattack&&!plrgotice){
             potand-=dt*(20+plrcrouch*10);
             if(potand<0){
                 potand+=pi*2;
-                PlaySoundAtBeebo(s_spin);
+                PlaySoundAtBeebo(s_spin,.5);
             }
         }else{
             potand+=((
@@ -2522,7 +2521,7 @@ void stepchar(){
             if(plrpole){
                 
             }else{
-                PlaySoundAtBeebo(stepsA[rand()%5]);
+                PlaySoundAtBeebo(stepsA[rand()%5],1);
             }
         }
         //wallrad step (if the level has one)
@@ -2579,7 +2578,7 @@ void stepchar(){
             }
             if(IsKeyPressed(KEY_LEFT_SHIFT)){
                 if(plrledgegrab){
-                    PlaySoundAtBeebo(s_jump2);
+                    PlaySoundAtBeebo(s_jump2,1);
                     plrwallrun=false;
                     plrledgegrab=false;
                     plrvel=Vector3Add(Vector3Add(v2(plrvel),(Vector3){0,20}),Vector3Scale(plrpoint,-50));
@@ -2623,31 +2622,31 @@ void stepchar(){
                         plrrolling=true;
                         plrg=false;
                         plrvel=Vector3Add(v2(plrvel),(Vector3){0,20});
-                        PlaySoundAtBeebo(s_jump2);
+                        PlaySoundAtBeebo(s_jump2,1);
                         botand = pi*2;
                     }else if(plrcrouch){
                         plrlongjump = true;
                         plrdjump = true;
                         if(Vector3Length(plrdir)>.8f){ //longjump
-                            PlaySoundAtBeebo(s_jump);
+                            PlaySoundAtBeebo(s_jump,1);
                             plrvel = Vector3Add(Vector3Scale(plrpoint,30),(Vector3){0,40});
                             botand = pi*4;
                         }else{ //backflip
                             plrjumping=30;
                             plrbackfliptimer=30;
                             plrrolling=true;
-                            PlaySoundAtBeebo(s_jump2);
+                            PlaySoundAtBeebo(s_jump2,1);
                             plrvel = Vector3Add(Vector3Scale(plrpoint,-10),(Vector3){0,60});
                             botand = -pi*4;
                         }
                     }else{ //normal jump
                         plrg=false;
                         plrvel=Vector3Add(v2(plrvel),(Vector3){0,40});
-                        PlaySoundAtBeebo(s_jump);
+                        PlaySoundAtBeebo(s_jump,1);
                         fallvr*=-1;
                     }
                 }else if(plrledgegrab){
-                    PlaySoundAtBeebo(s_jump2);
+                    PlaySoundAtBeebo(s_jump2,1);
                     plrwallrun=false;
                     plrledgegrab=false;
                     ledgetimer2=12;
@@ -2663,7 +2662,7 @@ void stepchar(){
                         plrjumping=24;
                     }
                 }else if(plrwallrun){
-                    PlaySoundAtBeebo(s_jump2);
+                    PlaySoundAtBeebo(s_jump2,1);
                     plrvel=Vector3Add(Vector3Add(v2(plrvel),(Vector3){0,30}),Vector3Scale(plrwallnorm,30));
                     plrpoint=Vector3Normalize(v2(Vector3Add(plrpoint,Vector3Scale(plrwallnorm,-2*Vector3DotProduct(plrpoint,plrwallnorm)))));
                     plrdjump=true;
@@ -2676,7 +2675,7 @@ void stepchar(){
                     plrjumping=18;
                     plrdjump=true;
                     plrvel=Vector3Add(v2(plrvel),(Vector3){0,40});
-                    PlaySoundAtBeebo(s_djump);
+                    PlaySoundAtBeebo(s_djump,1);
                     fallvr*=-1;
                     plrdjumptimer=27;
                     if(Vector3Length(plrdir)>.2f){
@@ -2694,11 +2693,11 @@ void stepchar(){
                         plrrolling=true;
                         plrg=false;
                         plrvel=Vector3Add(v2(plrvel),(Vector3){0,20});
-                        PlaySoundAtBeebo(s_jump2);
+                        PlaySoundAtBeebo(s_jump2,1);
                         botand = pi*2;
                     }
                 }else if(plrledgegrab){
-                    PlaySoundAtBeebo(s_jump2);
+                    PlaySoundAtBeebo(s_jump2,1);
                     plrwallrun=false;
                     plrledgegrab=false;
                     ledgetimer2=12;
@@ -2714,7 +2713,7 @@ void stepchar(){
                         plrjumping=24;
                     }
                 }else if(plrwallrun){
-                    PlaySoundAtBeebo(s_jump2);
+                    PlaySoundAtBeebo(s_jump2,1);
                     plrvel=Vector3Add(Vector3Add(v2(plrvel),(Vector3){0,30}),Vector3Scale(plrwallnorm,30));
                     plrpoint=Vector3Normalize(v2(Vector3Add(plrpoint,Vector3Scale(plrwallnorm,-2*Vector3DotProduct(plrpoint,plrwallnorm)))));
                     plrdjump=true;
@@ -2730,7 +2729,7 @@ void stepchar(){
                     plrdjump=true;
                     plrvel = Vector3Add(Vector3Scale(plrpoint,40),(Vector3){0,20}); //idk how to replicate cuz sometimes its 30 sometimes its not (in the og game)
                     plrg=false;
-                    PlaySoundAtBeebo(s_dive);
+                    PlaySoundAtBeebo(s_dive,1);
                     plranchored=false;
                 }
             }
@@ -2750,7 +2749,7 @@ void stepchar(){
                 attacktimer=13;
                 plrjumping=12;
                 plrattack=true;
-                PlaySoundAtBeebo(s_smack);
+                PlaySoundAtBeebo(s_smack,1.5);
                 plrdjump=true;
                 plrsliding=false;
                 plrlongjump=false;
@@ -3036,11 +3035,6 @@ void stepchar(){
             }
         }
         UpdateCameraPro(&camera,(Vector3){0},(Vector3){0},camzoomlerp);
-    }
-    camera2.target = Vector3Normalize(Vector3Subtract(camera.target,camera.position));
-    camera2.position = (Vector3){0};
-    if(IsKeyPressed(KEY_F)){
-        stillcam=!stillcam;
     }
 }
 
@@ -3721,6 +3715,19 @@ static void UpdateDrawFrame(void){
                     r64text("Sensitivity:",sw/2,sh*0.9,sh*0.04f,.5f,.5f,WHITE);
                     DrawRectangleV((Vector2){sw*.4,sh*.95},(Vector2){sw*.2,sh*.02},WHITE);
                     DrawRectangleV((Vector2){sw*.395+sensitivity*sw*.2,sh*.94},(Vector2){sw*.01,sh*.04},GREEN);
+                    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                        if(ishovering){
+                            switch(pauseselt){
+                                case 0:
+                                    ResumeMusicStream(s_slide);
+                                    paused = !paused;
+                                    break;
+                                case 4:
+                                    stillcam=!stillcam;
+                                    break;
+                            }
+                        }
+                    }
                     if(IsMouseButtonDown(MOUSE_BUTTON_LEFT)&&m.y>sh*.93&&m.y<sh*.99){
                         sensitivity = fmax(0,fmin(1,(m.x/sw)*5-(1/.5)));
                         sensitivity = round(sensitivity*8)/8;
