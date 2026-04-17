@@ -394,6 +394,9 @@ const unsigned char tex_title[]={ //texture 20
 const unsigned char tex_jetpack[]={
 #embed "textures/beebo/jetpack.png"
 };
+const unsigned char img_3dUI[]={
+#embed "textures/3dUI.png"
+};
 #define NUM_TEX 21
 typedef struct {
     Texture2D items[NUM_TEX];
@@ -670,6 +673,7 @@ Texture2D candicon;
 Texture2D t_water;
 Texture2D t_sun;
 Texture2D t_frame;
+Texture2D t_3dUI;
 //sounds
 float soundRolloffGlobal = 0.05f; //rolloff for sound attenuation, higher is quieter
 
@@ -2679,35 +2683,6 @@ void stepchar(){
         }
         //actions,like jumping
         if(canmove&&!plrswimming){
-            if(IsKeyDown(KEY_LEFT_SHIFT)&&(plrg||plrattack)){
-                plrsliding=false;
-                plrcrouch=true;
-            }else{
-                plrcrouch=false;
-            }
-            if(IsKeyPressed(KEY_LEFT_SHIFT)){
-                if(plrledgegrab){
-                    PlaySoundAtBeebo(s_jump2,1);
-                    plrwallrun=false;
-                    plrledgegrab=false;
-                    plrvel=Vector3Add(Vector3Add(v2(plrvel),(Vector3){0,20}),Vector3Scale(plrpoint,-50));
-                    botand=pi*-2;
-                    plrjumping=12;
-                    ledgetimer2=12;
-                    walltimer=6;
-                }else if(!plrg&&!plrwallrun&&!plrattack&&!plrpound&&!plrswimming&&!plrpole){   //pound
-                    plrpound=true;
-                    plrrolling=true;
-                    botand=pi*2;
-                    plrdjump=true;
-                    plrsliding=false;
-                    plranchored=true;
-                    plrlongjump=true;
-                    plrattack=false;
-                    poundtimer=24;
-                    plrflying=false;
-                }
-            }
             if(IsKeyPressed(KEY_SPACE)){
                 plrdancing=false;
                 if(plrg){
@@ -2791,6 +2766,35 @@ void stepchar(){
                     if(Vector3Length(plrdir)>.2f){
                         plrpoint = plrdir;
                     }
+                }
+            }
+            if(IsKeyDown(KEY_LEFT_SHIFT)&&(plrg||plrattack)){
+                plrsliding=false;
+                plrcrouch=true;
+            }else{
+                plrcrouch=false;
+            }
+            if(IsKeyPressed(KEY_LEFT_SHIFT)){
+                if(plrledgegrab){
+                    PlaySoundAtBeebo(s_jump2,1);
+                    plrwallrun=false;
+                    plrledgegrab=false;
+                    plrvel=Vector3Add(Vector3Add(v2(plrvel),(Vector3){0,20}),Vector3Scale(plrpoint,-50));
+                    botand=pi*-2;
+                    plrjumping=12;
+                    ledgetimer2=12;
+                    walltimer=6;
+                }else if(!plrg&&!plrwallrun&&!plrattack&&!plrpound&&!plrswimming&&!plrpole){   //pound
+                    plrpound=true;
+                    plrrolling=true;
+                    botand=pi*2;
+                    plrdjump=true;
+                    plrsliding=false;
+                    plranchored=true;
+                    plrlongjump=true;
+                    plrattack=false;
+                    poundtimer=24;
+                    plrflying=false;
                 }
             }
             if(IsKeyPressed(KEY_E)&&!plrattack&&!plrpound){
@@ -3243,6 +3247,9 @@ int main(){
     UnloadImage(img);
     img = LoadImageFromMemory(".png",img_frame,sizeof(img_frame));
     t_frame = LoadTextureFromImage(img);SetTextureFilter(t_frame,TEXTURE_FILTER_BILINEAR);
+    UnloadImage(img);
+    img = LoadImageFromMemory(".png",img_3dUI,sizeof(img_3dUI));
+    t_3dUI = LoadTextureFromImage(img);SetTextureFilter(t_3dUI,TEXTURE_FILTER_BILINEAR);
     UnloadImage(img);
     
     loadskin(plrskin);
@@ -3742,7 +3749,9 @@ static void UpdateDrawFrame(void){
             }*/
 
         EndMode3D();
-
+        
+        float sw2 = sw/2;
+        float sh2 = sh/2;
         if(map==M_TITLE){
             Vector2 m = GetMousePosition();
             bool h = false;
@@ -3770,9 +3779,9 @@ static void UpdateDrawFrame(void){
                 }
                 transition(true);
             }
-            r64text("Continue",sw/2,sh*.7f,sh*0.06f,.5f,0,WHITE);
-            r64text("New Game",sw/2,sh*.8f,sh*0.06f,.5f,0,WHITE);
-            r64text("Speedrun",sw/2,sh*.9f,sh*0.06f,.5f,0,WHITE);
+            r64text("Continue",sw2,sh*.7f,sh*0.06f,.5f,0,WHITE);
+            r64text("New Game",sw2,sh*.8f,sh*0.06f,.5f,0,WHITE);
+            r64text("Speedrun",sw2,sh*.9f,sh*0.06f,.5f,0,WHITE);
             float rot = mod(GetTime()*80.0f,360);
             Vector2 off = Vector2Scale(fixrotpos2(rot),sh*-0.03f);
             DrawTextureEx(spinny,Vector2Add((Vector2){(sw*.35f)+(sh*0.03f),(sh*.73f)+(titleselt*(sh*.1f))},off),rot,0.0078125f*(sh*0.06f),WHITE);
@@ -3813,7 +3822,7 @@ static void UpdateDrawFrame(void){
                 }
                 float s = t*touse;
                 float size = s/512.0f;
-                Vector2 pos = (Vector2){sw/2-s/2,sh/2-s/2};
+                Vector2 pos = (Vector2){sw2-s/2,sh2-s/2};
                 DrawTextureEx(trstex,pos,0,size,WHITE);
                 DrawRectangleV((Vector2){0},(Vector2){pos.x,sh},BLACK);
                 DrawRectangleV((Vector2){pos.x+s},(Vector2){sw,sh},BLACK);
@@ -3844,11 +3853,11 @@ static void UpdateDrawFrame(void){
             int ish = sh-inset;
             float pausesh = ish*1.1;
             float framesize = pausesh*0.76;
-            float framex = (sw/2)-framesize/2;
+            float framex = (sw2)-framesize/2;
             float framey = (pausesh/2)-(framesize/2)-ish*.1+inset;
             DrawTextureEx(t_frame,(Vector2){framex,framey},0,framesize/512,WHITE);
             float sframesize = pausesh*0.8;
-            float sframex = (sw/2)-sframesize/2;
+            float sframex = (sw2)-sframesize/2;
             float sframey = (pausesh/2)-(sframesize/2)-ish*.1+inset;
             float spinysize = sframesize*0.1;
             
@@ -3871,17 +3880,27 @@ static void UpdateDrawFrame(void){
                     spinyx += (hoverx-spinyx)*(dt*20);
                     DrawTextureEx(spinny,Vector2Add((Vector2){spinyx,spinyy},soff),srot,0.0078125f*spinysize,WHITE);
                     
-                    r64text("Paused",sw/2,framey+(framesize*.047),framesize*.12,.5,0,WHITE);
+                    r64text("Paused",sw2,framey+(framesize*.047),framesize*.12,.5,0,WHITE);
                     
-                    r64text("Resume",sw/2,framey+(framesize*.24),framesize*.09,.5,0,WHITE); //id 0
-                    r64text("Icecreams",sw/2,framey+(framesize*.34),framesize*.09,.5,0,WHITE);
-                    r64text("Snapshot Mode",sw/2,framey+(framesize*.44),framesize*.09,.5,0,WHITE);
-                    r64text("Clothing",sw/2,framey+(framesize*.54),framesize*.09,.5,0,WHITE);
-                    r64text("Follow Camera",sw/2,framey+(framesize*.64),framesize*.09,.5,0,WHITE);
-                    r64text("Back to Hub",sw/2,framey+(framesize*.74),framesize*.09,.5,0,WHITE);
-                    r64text("Quit to Title",sw/2,framey+(framesize*.84),framesize*.09,.5,0,WHITE);
+                    float btsize = framesize*.09;
+                    float btposx = framex+framesize*.8;
+                    r64text("Resume",sw2,framey+(framesize*.24),btsize,.5,0,WHITE); //id 0
+                    DrawTexturePro(t_3dUI,(Rectangle){128,0,128,128},(Rectangle){btposx,framey+(framesize*.24),btsize,btsize},(Vector2){0},0,WHITE);
+                    r64text("Icecreams",sw2,framey+(framesize*.34),btsize,.5,0,WHITE);
+                    DrawTexturePro(t_3dUI,(Rectangle){256,256,128,128},(Rectangle){btposx,framey+(framesize*.34),btsize,btsize},(Vector2){0},0,WHITE);
+                    r64text("Snapshot Mode",sw2,framey+(framesize*.44),btsize,.5,0,WHITE);
+                    DrawTexturePro(t_3dUI,(Rectangle){384,128,128,128},(Rectangle){btposx,framey+(framesize*.44),btsize,btsize},(Vector2){0},0,WHITE);
+                    r64text("Clothing",sw2,framey+(framesize*.54),btsize,.5,0,WHITE);
+                    DrawTexturePro(t_3dUI,(Rectangle){384,0,128,128},(Rectangle){btposx,framey+(framesize*.54),btsize,btsize},(Vector2){0},0,WHITE);
+                    r64text("Follow Camera",sw2,framey+(framesize*.64),btsize,.5,0,WHITE);
+                    DrawTexturePro(t_3dUI,(Rectangle){stillcam?128:0,128,128,128},(Rectangle){btposx,framey+(framesize*.64),btsize,btsize},(Vector2){0},0,WHITE);
+                    r64text("Back to Hub",sw2,framey+(framesize*.74),btsize,.5,0,WHITE);
+                    DrawTexturePro(t_3dUI,(Rectangle){256,0,128,128},(Rectangle){btposx,framey+(framesize*.74),btsize,btsize},(Vector2){0},0,WHITE);
+                    r64text("Quit to Title",sw2,framey+(framesize*.84),btsize,.5,0,WHITE);
+                    DrawTexturePro(t_3dUI,(Rectangle){256,128,128,128},(Rectangle){btposx,framey+(framesize*.84),btsize,btsize},(Vector2){0},0,WHITE);
                     
-                    r64text("Sensitivity:",sw/2,sh*0.9,sh*0.04f,.5f,.5f,WHITE);
+                    
+                    r64text("Sensitivity:",sw2,sh*0.9,sh*0.04f,.5f,.5f,WHITE);
                     DrawRectangleV((Vector2){sw*.4,sh*.95},(Vector2){sw*.2,sh*.02},WHITE);
                     DrawRectangleV((Vector2){sw*.395+sensitivity*sw*.2,sh*.94},(Vector2){sw*.01,sh*.04},GREEN);
                     if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
