@@ -397,6 +397,9 @@ const unsigned char tex_jetpack[]={
 const unsigned char img_3dUI[]={
 #embed "textures/3dUI.png"
 };
+const unsigned char img_stick2[]={
+#embed "textures/stick2.png"
+};
 #define NUM_TEX 21
 typedef struct {
     Texture2D items[NUM_TEX];
@@ -561,6 +564,9 @@ const unsigned char beeb_jetpack[]={ //model 35 (not terrain)
 const unsigned char beeb_booster[]={ //model 36 (not terrain)
 #embed "models/beebo/booster.glb"
 };
+const unsigned char beeb_pack[]={ //model 37 (not terrain)
+#embed "models/beebo/pack.glb"
+};
 const unsigned char *glblist[] = {hub_meshgrass,
                                 hub_meshcliff,
                                 title_meshlogo,
@@ -597,7 +603,8 @@ const unsigned char *glblist[] = {hub_meshgrass,
                                 beeb_hat1,
                                 title_meshbeam,
                                 beeb_jetpack,
-                                beeb_booster
+                                beeb_booster,
+                                beeb_pack
                                 };
 const int glbsize[] = {sizeof(hub_meshgrass),
                     sizeof(hub_meshcliff),
@@ -635,7 +642,8 @@ const int glbsize[] = {sizeof(hub_meshgrass),
                     sizeof(beeb_hat1),
                     sizeof(title_meshbeam),
                     sizeof(beeb_jetpack),
-                    sizeof(beeb_booster)
+                    sizeof(beeb_booster),
+                    sizeof(beeb_pack)
                     };
 
 const unsigned char *filepointer;
@@ -674,6 +682,7 @@ Texture2D t_water;
 Texture2D t_sun;
 Texture2D t_frame;
 Texture2D t_3dUI;
+Texture2D t_stick2;
 //sounds
 float soundRolloffGlobal = 0.05f; //rolloff for sound attenuation, higher is quieter
 
@@ -703,6 +712,8 @@ Model b_barm;
 Model b_dot;
 Model b_jetpack;
 Model b_booster;
+Model b_pack;
+
 Model p_break; //for breakables
 Model p_sun;
 
@@ -2129,7 +2140,12 @@ void drawbeeb(){
             Matrix jetbpos=MatrixMultiply(matrel(torsorot,(Vector3){0,-.6,1},torsorot),
             MatrixTranslate(torsoonlypos.x,torsoonlypos.y,torsoonlypos.z));
             DrawMesh(b_booster.meshes[0],b_booster.materials[1],MatrixMultiply(MatrixScale(0.01214169018*br,0.01214515657*br,0.01214*br),jetbpos));
+        }else{
+            Matrix packpos=MatrixMultiply(matrel(MatrixMultiply(MatrixRotateXYZ((Vector3){1.44,pi,0}),torsorot),(Vector3){0,.12,.48},torsorot),
+            MatrixTranslate(torsoonlypos.x,torsoonlypos.y,torsoonlypos.z));
+            DrawMesh(b_pack.meshes[0],b_pack.materials[1],MatrixMultiply(MatrixScale(.33,.8403361345,.3229527105),packpos));
         }
+        
     }
     if(plrgotice){
         Matrix charpos = MatrixTranslate(plrpos.x,plrpos.y,plrpos.z);
@@ -3332,6 +3348,9 @@ int main(){
     img = LoadImageFromMemory(".png",img_3dUI,sizeof(img_3dUI));
     t_3dUI = LoadTextureFromImage(img);SetTextureFilter(t_3dUI,TEXTURE_FILTER_BILINEAR);
     UnloadImage(img);
+    img = LoadImageFromMemory(".png",img_stick2,sizeof(img_stick2));
+    t_stick2 = LoadTextureFromImage(img);SetTextureFilter(t_stick2,TEXTURE_FILTER_BILINEAR);
+    UnloadImage(img);
     
     loadskin(plrskin);
     img = LoadImageFromMemory(".png",tex_jetpack,sizeof(tex_jetpack));
@@ -3486,6 +3505,11 @@ int main(){
     SetLoadFileDataCallback(NULL);
     b_booster.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = t_jetpack;
     b_booster.materials[1].shader = shader;
+    prepmodel(glblist[37],glbsize[37]);
+    b_pack = LoadModel("tuffness.glb");
+    SetLoadFileDataCallback(NULL);
+    b_pack.materials[1].maps[MATERIAL_MAP_DIFFUSE].texture = curskin;
+    b_pack.materials[1].shader = shader;
     
     
     prepmodel(glblist[33],glbsize[33]);
@@ -3547,6 +3571,7 @@ int main(){
 }
 int8_t blink = 10;
 int8_t candoffset = 0;
+Rectangle pauserec = {0};
 static void dotheframecrap(){
     sw = GetScreenWidth();
     sh = GetScreenHeight();
@@ -3573,7 +3598,10 @@ static void dotheframecrap(){
         sh = GetScreenHeight();
     }
 #endif
-    if((IsKeyPressed(KEY_ESCAPE)||IsKeyPressed(KEY_P)||IsKeyPressed(KEY_GRAVE))&&usechar){
+    Vector2 m = GetMousePosition();
+    if((IsKeyPressed(KEY_ESCAPE)||IsKeyPressed(KEY_P)||IsKeyPressed(KEY_GRAVE)
+    ||(!paused&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT)&&CheckCollisionPointRec((Vector2){m.x,m.y},pauserec))    
+    )&&usechar){
         if(paused){
             ResumeMusicStream(s_slide);
         }else{
@@ -3591,7 +3619,6 @@ static void dotheframecrap(){
         paused = !paused;
     }
     if(!oldrightcursor){
-        Vector2 m = GetMousePosition();
         mx = m.x;
         my = m.y;
     }
@@ -3891,6 +3918,16 @@ static void UpdateDrawFrame(void){
             float icos = nums/256;
             DrawTextureEx(icedicon,(Vector2){icox,icoy},0,icos,WHITE);
             DrawTextureEx(candicon,(Vector2){icox,icoy+(uisize*.2f)+(invh*(candoffset*.1))},0,icos,WHITE);
+            
+            float pbx = xoffset+(uisize*.1);
+            float pby = inset+(uisize*.068);
+            float pbsize = uisize*.25;
+            float pbgsize = pbsize*1.3;
+            float pbgx = pbx+pbsize/2-pbgsize/2;
+            float pbgy = pby+pbsize/2-pbgsize/2;
+            DrawTextureEx(t_stick2,(Vector2){pbgx,pbgy},0,pbgsize/256,(Color){138,138,138,255});
+            DrawTexturePro(t_3dUI,(Rectangle){384,256,128,128},(Rectangle){pbx,pby,pbsize,pbsize},(Vector2){0},0,WHITE);
+            pauserec=(Rectangle){pbx,pby,pbsize,pbsize};
         }
         if(trsing){
             float t = GetTime()-trstart;
