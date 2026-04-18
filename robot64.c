@@ -400,6 +400,9 @@ const unsigned char img_3dUI[]={
 const unsigned char img_stick2[]={
 #embed "textures/stick2.png"
 };
+const unsigned char tex_sky_turtle[]={
+#embed "skybox/turtle.png"
+};
 #define NUM_TEX 21
 typedef struct {
     Texture2D items[NUM_TEX];
@@ -1481,7 +1484,7 @@ void map_turtle(){
     iswallrad=true;wallrad=516;
     unloadassets();
     map = M_TURTLE;
-	Image img = LoadImageFromMemory(".png",tex_sky_default,sizeof(tex_sky_default));
+	Image img = LoadImageFromMemory(".png",tex_sky_turtle,sizeof(tex_sky_turtle));
     skybox.materials[0].maps[MATERIAL_MAP_CUBEMAP].texture = LoadTextureCubemap(img, CUBEMAP_LAYOUT_AUTO_DETECT);
     UnloadImage(img);
     bgm = LoadMusicStreamFromMemory(".ogg",turtle_bgm,sizeof(turtle_bgm));bgm.looping = true;PlayMusicStream(bgm);
